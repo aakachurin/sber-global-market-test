@@ -1,0 +1,68 @@
+plugins {
+    id 'java'
+    id 'io.qameta.allure' version '2.11.2'
+    id "org.openapi.generator" version "7.3.0"
+}
+
+group = 'com.aakachurin'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation platform('org.junit:junit-bom:5.10.1')
+    implementation platform('io.cucumber:cucumber-bom:7.15.0')
+    implementation platform('io.qameta.allure:allure-bom:2.25.0')
+    implementation platform('com.fasterxml.jackson:jackson-bom:2.16.1')
+    implementation platform('io.rest-assured:rest-assured-bom:5.4.0')
+
+    implementation 'io.rest-assured:rest-assured'
+
+    implementation 'org.junit.jupiter:junit-jupiter'
+    implementation 'org.junit.platform:junit-platform-suite'
+
+    implementation 'io.cucumber:cucumber-java'
+    implementation 'io.cucumber:cucumber-junit'
+    implementation 'io.cucumber:cucumber-junit-platform-engine'
+
+    implementation 'io.qameta.allure:allure-cucumber7-jvm'
+    implementation 'io.qameta.allure:allure-junit-platform'
+    implementation 'io.qameta.allure:allure-rest-assured'
+
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+    implementation 'javax.annotation:javax.annotation-api:1.3.2'
+    implementation 'com.google.code.findbugs:jsr305:3.0.2'
+}
+
+test {
+    useJUnitPlatform()
+    systemProperty 'weatherApiKey', weatherApiKey
+    systemProperty 'weatherApiUri', weatherApiUri
+}
+
+ext { generatedSource = file("${rootProject.layout.buildDirectory.get()}/openapi") }
+openApiGenerate {
+    inputSpec = "${rootDir}/src/main/resources/weather_api.yaml"
+    apiPackage = group+".openapi.rest.api"
+    modelPackage = group+".openapi.rest.model"
+    invokerPackage = group+".openapi.invoker"
+    outputDir = "${generatedSource}"
+    validateSpec = false
+    generateModelTests = false
+    generateApiTests = false
+    generatorName = 'java'
+    configOptions = [
+            useTags                : 'true',
+            openApiNullable        : 'false',
+            dateLibrary            : 'java8',
+            library                : 'rest-assured',
+            hideGenerationTimestamp: 'true',
+            serializationLibrary   : 'jackson'
+    ]
+}
+sourceSets.main.java.srcDirs += "${generatedSource}/src/main/java"
+compileJava.dependsOn tasks.openApiGenerate
